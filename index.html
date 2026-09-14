@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pedido de Consumibles</title>
+<title>Innuro — Pedido de Consumibles</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap');
 
@@ -455,10 +455,6 @@
     <div class="section">
       <p class="section-label">Urgencia</p>
       <div class="urgency" role="radiogroup" aria-label="Urgencia del pedido">
-        <span class="urgency-item" data-level="baja">
-          <input type="radio" id="urgBaja" name="urgencia" value="Baja">
-          <label for="urgBaja">Baja</label>
-        </span>
         <span class="urgency-item" data-level="normal">
           <input type="radio" id="urgNormal" name="urgencia" value="Normal" checked>
           <label for="urgNormal">Normal</label>
@@ -692,6 +688,8 @@
     renderCart();
     cartWarning.classList.add('hidden');
 
+    // La categoría se mantiene: solo se reinicia el artículo, para poder
+    // seguir añadiendo referencias de la misma categoría sin repetir el paso.
     populateArticulos(categoria);
     cantidadInput.value = '1';
     articuloSelect.focus();
