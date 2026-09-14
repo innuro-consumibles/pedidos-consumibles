@@ -404,6 +404,10 @@
         <label for="nombre">Nombre o empresa <span class="opt">(el nombre comercial con el que trabajas con nosotros)</span></label>
         <input type="text" id="nombre" name="nombre" required placeholder="Escribe el mismo nombre con el que haces tus pedidos habitualmente" autocomplete="name">
       </div>
+      <div class="field">
+        <label for="cif">CIF / NIF</label>
+        <input type="text" id="cif" name="cif" required placeholder="Ej. B12345678" autocomplete="off">
+      </div>
     </div>
 
     <div class="section">
@@ -566,6 +570,7 @@
 
   var form = document.getElementById('orderForm');
   var nombreInput = document.getElementById('nombre');
+  var cifInput = document.getElementById('cif');
   var categoriaSelect = document.getElementById('categoria');
   var articuloSelect = document.getElementById('articulo');
   var cantidadInput = document.getElementById('cantidad');
@@ -699,6 +704,7 @@
 
   function buildMailContent() {
     var nombre = nombreInput.value.trim();
+    var cif = cifInput.value.trim();
     var comentarios = document.getElementById('comentarios').value.trim();
     var urgenciaEl = form.querySelector('input[name="urgencia"]:checked');
     var urgencia = urgenciaEl ? urgenciaEl.value : 'Normal';
@@ -713,7 +719,7 @@
       return '- ' + item.cantidad + ' × ' + item.articulo + ' (' + item.categoria + ')';
     });
 
-    var lines = ['Nuevo pedido de consumibles', '', 'Solicitante: ' + nombre, '', 'Artículos:']
+    var lines = ['Nuevo pedido de consumibles', '', 'Solicitante: ' + nombre, 'CIF/NIF: ' + cif, '', 'Artículos:']
       .concat(itemLines)
       .concat([
         '',
@@ -779,6 +785,7 @@
     e.preventDefault();
 
     if (!nombreInput.value.trim()) { nombreInput.reportValidity(); return; }
+    if (!cifInput.value.trim()) { cifInput.reportValidity(); return; }
 
     if (cart.length === 0) {
       cartWarning.classList.remove('hidden');
