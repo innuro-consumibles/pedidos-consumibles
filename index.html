@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pedido de Consumibles</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap');
+
+  :root {
+    --bg: #f5f4ef;
+    --surface: #ffffff;
+    --surface-sunken: #edece5;
+    --text: #21261f;
+    --text-muted: #5d6459;
+    --border: #dcdccf;
+    --border-strong: #c4c5b6;
+    --accent: #2f6f5c;
+    --accent-strong: #1e4e40;
+    --accent-tint: #e4efe9;
+    --urgent: #b4502f;
+    --urgent-tint: #f7e9e2;
+    --focus: #2f6f5c;
+    --shadow: 0 1px 2px rgba(33,38,31,0.06), 0 8px 24px -12px rgba(33,38,31,0.18);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #131614;
+      --surface: #1b2019;
+      --surface-sunken: #23281f;
+      --text: #eceee7;
+      --text-muted: #a3ab9b;
+      --border: #333a30;
+      --border-strong: #454d3f;
+      --accent: #6bb69b;
+      --accent-strong: #8fcdb3;
+      --accent-tint: #223027;
+      --urgent: #e0906f;
+      --urgent-tint: #33251c;
+      --focus: #6bb69b;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #131614;
+    --surface: #1b2019;
+    --surface-sunken: #23281f;
+    --text: #eceee7;
+    --text-muted: #a3ab9b;
+    --border: #333a30;
+    --border-strong: #454d3f;
+    --accent: #6bb69b;
+    --accent-strong: #8fcdb3;
+    --accent-tint: #223027;
+    --urgent: #e0906f;
+    --urgent-tint: #33251c;
+    --focus: #6bb69b;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Work Sans', system-ui, sans-serif;
+    padding: clamp(20px, 5vw, 56px) 20px 64px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 620px;
+    margin: 0 auto;
+  }
+
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: var(--accent);
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(30px, 6vw, 42px);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    margin: 0 0 12px;
+    text-wrap: balance;
+  }
+
+  .intro {
+    color: var(--text-muted);
+    font-size: 15.5px;
+    max-width: 46ch;
+    margin: 0 0 32px;
+  }
+
+  form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: clamp(20px, 4vw, 34px);
+  }
+
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+    margin: 0 0 16px;
+  }
+  .section + .section {
+    margin-top: 30px;
+    padding-top: 26px;
+    border-top: 1px solid var(--border);
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 480px) {
+    .row { grid-template-columns: 1fr; }
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  label .opt {
+    font-weight: 400;
+    color: var(--text-muted);
+    font-size: 12.5px;
+  }
+
+  input, select, textarea {
+    font: inherit;
+    font-size: 15px;
+    color: var(--text);
+    background: var(--surface-sunken);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    padding: 11px 12px;
+    width: 100%;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 0.8; }
+  textarea { resize: vertical; min-height: 76px; font-family: inherit; }
+
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--focus);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent);
+  }
+  input:invalid:not(:placeholder-shown), select:invalid {
+    border-color: var(--urgent);
+  }
+
+  .urgency {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .urgency input { position: absolute; opacity: 0; pointer-events: none; }
+  .urgency label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-sunken);
+    border-radius: 8px;
+    padding: 10px 6px;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .urgency input:checked + label {
+    background: var(--accent-tint);
+    border-color: var(--accent);
+    color: var(--accent-strong);
+  }
+  .urgency input:focus-visible + label {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .urgency-item[data-level="urgente"] input:checked + label {
+    background: var(--urgent-tint);
+    border-color: var(--urgent);
+    color: var(--urgent);
+  }
+
+  .urgent-note {
+    margin: 12px 0 0;
+    font-size: 13px;
+    color: var(--urgent);
+    background: var(--urgent-tint);
+    border: 1px solid color-mix(in srgb, var(--urgent) 35%, transparent);
+    border-radius: 8px;
+    padding: 9px 12px;
+  }
+
+  .add-btn {
+    appearance: none;
+    width: 100%;
+    border: 1px dashed var(--accent);
+    background: var(--accent-tint);
+    color: var(--accent-strong);
+    font: inherit;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    margin-top: 2px;
+  }
+  .add-btn:hover { background: color-mix(in srgb, var(--accent) 20%, var(--accent-tint)); }
+  .add-btn:active { transform: translateY(1px); }
+  .add-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .cart-wrap { margin-top: 16px; }
+
+  .cart-empty {
+    font-size: 13.5px;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  .cart-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .cart-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: var(--surface-sunken);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .cart-item-left { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .cart-item-name { font-size: 14px; font-weight: 500; color: var(--text); overflow-wrap: anywhere; }
+  .cart-item-cat {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .remove-btn {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 20px;
+    line-height: 1;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s;
+  }
+  .remove-btn:hover { background: var(--urgent-tint); color: var(--urgent); }
+  .remove-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .cart-warning {
+    font-size: 13px;
+    color: var(--urgent);
+    margin: 10px 0 0;
+  }
+
+  .hidden { display: none !important; }
+
+  .submit-note {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 13.5px;
+    color: var(--text-muted);
+    background: var(--accent-tint);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 24px;
+  }
+  .submit-note svg { flex-shrink: 0; margin-top: 1px; color: var(--accent-strong); }
+
+  button[type="submit"] {
+    appearance: none;
+    border: none;
+    width: 100%;
+    margin-top: 16px;
+    background: var(--accent);
+    color: #fbfaf6;
+    font: inherit;
+    font-weight: 600;
+    font-size: 15.5px;
+    padding: 14px 18px;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.05s;
+  }
+  button[type="submit"]:hover { background: var(--accent-strong); }
+  button[type="submit"]:active { transform: translateY(1px); }
+  button[type="submit"]:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .confirm {
+    margin-top: 18px;
+    padding: 16px 18px;
+    border-radius: 10px;
+    background: var(--accent-tint);
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    font-size: 14px;
+    color: var(--text);
+  }
+  .confirm strong { color: var(--accent-strong); }
+  .confirm a { color: var(--accent-strong); }
+  .confirm a:not(:hover) { text-decoration-color: color-mix(in srgb, var(--accent-strong) 40%, transparent); }
+  .confirm-alt {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .link-btn {
+    appearance: none;
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
+    font-size: inherit;
+    color: var(--accent-strong);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--accent-strong) 40%, transparent);
+    cursor: pointer;
+  }
+  .link-btn:hover { text-decoration-color: var(--accent-strong); }
+  .link-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  footer {
+    text-align: center;
+    margin-top: 28px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+</style>
+
+</head>
+<body>
+<div class="page">
+  <p class="eyebrow">Innuro &middot; Gestión interna</p>
+  <h1>Pedido de consumibles</h1>
+  <p class="intro">Añade tantos artículos como necesites — por categoría y cantidad — y al final pulsa «Enviar pedido por correo». Se abrirá tu aplicación de correo con todo el pedido ya redactado para Adrián; solo tendrás que darle a enviar.</p>
+
+  <form id="orderForm" novalidate>
+    <div class="section">
+      <p class="section-label">Solicitante</p>
+      <div class="field">
+        <label for="nombre">Nombre o empresa</label>
+        <input type="text" id="nombre" name="nombre" required placeholder="Ej. Marta Gómez o Suministros López" autocomplete="name">
+      </div>
+    </div>
+
+    <div class="section">
+      <p class="section-label">Artículos del pedido</p>
+      <div class="row">
+        <div class="field">
+          <label for="categoria">Categoría</label>
+          <select id="categoria" required>
+            <option value="" disabled selected>Selecciona una categoría</option>
+            <option value="DTF">DTF</option>
+            <option value="DTI">DTI</option>
+            <option value="UVDTF">UVDTF</option>
+            <option value="POWDER">POWDER</option>
+            <option value="FILM">FILM</option>
+            <option value="3DTI">3DTI</option>
+            <option value="General">General</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="cantidad">Cantidad</label>
+          <input type="number" id="cantidad" min="1" step="1" required value="1">
+        </div>
+      </div>
+      <div class="field">
+        <label for="articulo">Artículo</label>
+        <select id="articulo" required disabled>
+          <option value="" selected>Selecciona primero una categoría</option>
+        </select>
+      </div>
+      <div class="field hidden" id="otroField">
+        <label for="otroArticulo">Especifica el artículo</label>
+        <input type="text" id="otroArticulo" placeholder="Ej. nombre o referencia del producto">
+      </div>
+
+      <button type="button" id="addItemBtn" class="add-btn">+ Añadir artículo al pedido</button>
+
+      <div class="cart-wrap">
+        <p class="cart-empty" id="cartEmpty">Todavía no has añadido ningún artículo.</p>
+        <ul class="cart-list hidden" id="cartList"></ul>
+        <p class="cart-warning hidden" id="cartWarning">Añade al menos un artículo antes de enviar el pedido.</p>
+      </div>
+
+      <div class="field" style="margin-top: 22px;">
+        <label for="comentarios">Comentarios <span class="opt">(detalles adicionales, referencia…)</span></label>
+        <textarea id="comentarios" name="comentarios" placeholder="Añade aquí cualquier detalle adicional"></textarea>
+      </div>
+    </div>
+
+    <div class="section">
+      <p class="section-label">Urgencia</p>
+      <div class="urgency" role="radiogroup" aria-label="Urgencia del pedido">
+        <span class="urgency-item" data-level="baja">
+          <input type="radio" id="urgBaja" name="urgencia" value="Baja">
+          <label for="urgBaja">Baja</label>
+        </span>
+        <span class="urgency-item" data-level="normal">
+          <input type="radio" id="urgNormal" name="urgencia" value="Normal" checked>
+          <label for="urgNormal">Normal</label>
+        </span>
+        <span class="urgency-item" data-level="urgente">
+          <input type="radio" id="urgUrgente" name="urgencia" value="Urgente">
+          <label for="urgUrgente">Urgente</label>
+        </span>
+      </div>
+      <p class="urgent-note hidden" id="urgentNote">El envío urgente a la Península tiene un coste adicional de 12&nbsp;€.</p>
+    </div>
+
+    <div class="submit-note">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6 12 13 2 6"/><path d="M2 6h20v12H2z"/></svg>
+      <span>Al enviarlo se abrirá un borrador de Gmail dirigido a Adrián, ya redactado y listo para pulsar «Enviar».</span>
+    </div>
+
+    <button type="submit">Enviar pedido por correo</button>
+
+    <div class="confirm hidden" id="confirmBox">
+      <strong>Listo.</strong> Se ha abierto una pestaña de Gmail con el pedido ya redactado — solo tienes que darle a «Enviar» allí.
+      <div class="confirm-alt">
+        ¿No se ha abierto o no usas Gmail?
+        <a id="manualLink" href="#" rel="noopener">Ábrelo en tu aplicación de correo</a>
+        <span aria-hidden="true">·</span>
+        <button type="button" id="copyBtn" class="link-btn">Copiar el pedido</button>
+      </div>
+    </div>
+  </form>
+
+  <footer>Los pedidos llegan directamente al correo de Adrián (Innuro).</footer>
+</div>
+
+<script>
+(function () {
+  var EMAIL = 'adrian@innuro.es';
+
+  var CATALOG = {
+    DTF: [
+      'Líquido de limpieza DTF (1kg)',
+      'Líquido recuperador DTF (1kg)',
+      'Tinta DTF Cian (1kg)',
+      'Tinta DTF Magenta (1kg)',
+      'Tinta DTF Amarillo (1kg)',
+      'Tinta DTF Negro (1kg)',
+      'Tinta DTF Blanco (1kg)',
+      'Tinta DTF Magenta Flúor (1kg)',
+      'Tinta DTF Amarillo Flúor (1kg)',
+      'Tinta DTF Naranja Flúor (1kg)',
+      'Tinta DTF Verde Flúor (1kg)'
+    ],
+    DTI: [
+      'Tinta DTI Cian (1kg)',
+      'Tinta DTI Magenta (1kg)',
+      'Tinta DTI Amarillo (1kg)',
+      'Tinta DTI Negro (1kg)',
+      'Tinta DTI Blanco (1kg)',
+      'Tinta DTI Azul (1kg)',
+      'Tinta DTI Verde (1kg)',
+      'Tinta DTI Naranja (1kg)',
+      'Tinta DTI Rojo (1kg)'
+    ],
+    UVDTF: [
+      'Tinta UV 01 Cian (1kg)',
+      'Tinta UV 01 Cian Claro (1kg)',
+      'Tinta UV 01 Magenta (1kg)',
+      'Tinta UV 01 Magenta Claro (1kg)',
+      'Tinta UV 01 Amarillo (1kg)',
+      'Tinta UV 01 Negro (1kg)',
+      'Tinta UV 01 Blanco (1kg)',
+      'Barniz UV 01 (1kg)',
+      'Líquido de limpieza UV (1kg)',
+      'Film UV DTF A — 30cm (caja 2 rollos x 100m)',
+      'Film UV DTF B — 30cm (caja 2 rollos x 100m)',
+      'Film UV DTF A — 60cm x 100m',
+      'Film UV DTF B — 60cm x 100m'
+    ],
+    POWDER: [
+      'Polvo DTF (5kg)',
+      'Polvo DTF Pro Max (5kg)',
+      'Polvo DTF Anti-sublimación (5kg)',
+      'Polvo DTF Blockout (5kg)',
+      'Polvo DTF Waterproof (5kg)'
+    ],
+    FILM: [
+      'Film textil DTF 30cm x 100m',
+      'Film textil DTF 37cm x 100m',
+      'Film textil DTF 40cm x 100m',
+      'Film textil DTF 45cm x 100m',
+      'Film textil DTF 60cm x 100m',
+      'Film textil DTF 60cm x 200m'
+    ],
+    '3DTI': [
+      'Tinta UV 3D Cian (1kg)',
+      'Tinta UV 3D Magenta (1kg)',
+      'Tinta UV 3D Amarillo (1kg)',
+      'Tinta UV 3D Negro (1kg)',
+      'Tinta UV 3D Blanco (1kg)',
+      'Barniz UV 3D (1kg)',
+      'Líquido de limpieza UV 3D (1kg)',
+      'Vinilo Silicone Block 0,16mm',
+      'Vinilo Silicone Block 0,55mm'
+    ],
+    General: [
+      'Bastoncillos de limpieza (pack)',
+      'Toallitas de limpieza (pack)'
+    ]
+  };
+
+  var form = document.getElementById('orderForm');
+  var nombreInput = document.getElementById('nombre');
+  var categoriaSelect = document.getElementById('categoria');
+  var articuloSelect = document.getElementById('articulo');
+  var cantidadInput = document.getElementById('cantidad');
+  var otroField = document.getElementById('otroField');
+  var otroInput = document.getElementById('otroArticulo');
+  var addItemBtn = document.getElementById('addItemBtn');
+  var cartEmpty = document.getElementById('cartEmpty');
+  var cartList = document.getElementById('cartList');
+  var cartWarning = document.getElementById('cartWarning');
+  var urgentNote = document.getElementById('urgentNote');
+  var confirmBox = document.getElementById('confirmBox');
+  var manualLink = document.getElementById('manualLink');
+  var copyBtn = document.getElementById('copyBtn');
+
+  var cart = [];
+  var lastContent = null;
+
+  function populateArticulos(categoria) {
+    var items = CATALOG[categoria] || [];
+    articuloSelect.innerHTML = '';
+
+    var placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    placeholder.textContent = 'Selecciona un artículo';
+    articuloSelect.appendChild(placeholder);
+
+    items.forEach(function (name) {
+      var opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      articuloSelect.appendChild(opt);
+    });
+
+    var otroOpt = document.createElement('option');
+    otroOpt.value = 'Otro';
+    otroOpt.textContent = 'Otro (no está en la lista)';
+    articuloSelect.appendChild(otroOpt);
+
+    articuloSelect.disabled = !categoria;
+    otroField.classList.add('hidden');
+    otroInput.required = false;
+    otroInput.value = '';
+  }
+
+  categoriaSelect.addEventListener('change', function () {
+    populateArticulos(categoriaSelect.value);
+  });
+
+  articuloSelect.addEventListener('change', function () {
+    var isOtro = articuloSelect.value === 'Otro';
+    otroField.classList.toggle('hidden', !isOtro);
+    otroInput.required = isOtro;
+    if (!isOtro) otroInput.value = '';
+  });
+
+  form.addEventListener('change', function (e) {
+    if (e.target.name === 'urgencia') {
+      urgentNote.classList.toggle('hidden', e.target.value !== 'Urgente');
+    }
+  });
+
+  function renderCart() {
+    cartList.innerHTML = '';
+
+    if (cart.length === 0) {
+      cartEmpty.classList.remove('hidden');
+      cartList.classList.add('hidden');
+      return;
+    }
+
+    cartEmpty.classList.add('hidden');
+    cartList.classList.remove('hidden');
+
+    cart.forEach(function (item, idx) {
+      var li = document.createElement('li');
+      li.className = 'cart-item';
+
+      var left = document.createElement('div');
+      left.className = 'cart-item-left';
+      var name = document.createElement('span');
+      name.className = 'cart-item-name';
+      name.textContent = item.cantidad + ' × ' + item.articulo;
+      var cat = document.createElement('span');
+      cat.className = 'cart-item-cat';
+      cat.textContent = item.categoria;
+      left.appendChild(name);
+      left.appendChild(cat);
+
+      var removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'remove-btn';
+      removeBtn.setAttribute('aria-label', 'Quitar ' + item.articulo);
+      removeBtn.textContent = '×';
+      removeBtn.addEventListener('click', function () {
+        cart.splice(idx, 1);
+        renderCart();
+      });
+
+      li.appendChild(left);
+      li.appendChild(removeBtn);
+      cartList.appendChild(li);
+    });
+  }
+
+  function addItem() {
+    var categoria = categoriaSelect.value;
+    if (!categoria) { categoriaSelect.reportValidity(); return; }
+
+    if (!articuloSelect.value) { articuloSelect.reportValidity(); return; }
+    var isOtro = articuloSelect.value === 'Otro';
+    var articulo = isOtro ? otroInput.value.trim() : articuloSelect.value;
+    if (isOtro && !articulo) { otroInput.reportValidity(); return; }
+
+    var cantidad = parseInt(cantidadInput.value, 10);
+    if (!cantidad || cantidad < 1) { cantidadInput.reportValidity(); return; }
+
+    cart.push({ categoria: categoria, articulo: articulo, cantidad: cantidad });
+    renderCart();
+    cartWarning.classList.add('hidden');
+
+    populateArticulos(categoria);
+    cantidadInput.value = '1';
+    articuloSelect.focus();
+  }
+
+  addItemBtn.addEventListener('click', addItem);
+
+  function buildMailContent() {
+    var nombre = nombreInput.value.trim();
+    var comentarios = document.getElementById('comentarios').value.trim();
+    var urgenciaEl = form.querySelector('input[name="urgencia"]:checked');
+    var urgencia = urgenciaEl ? urgenciaEl.value : 'Normal';
+    var ahora = new Date();
+    var hoy = ahora.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+    var hoyCorto = ahora.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+    var subject = 'Pedido de consumibles — ' + nombre + ' — ' + hoyCorto
+      + (urgencia === 'Urgente' ? ' [URGENTE]' : '');
+
+    var itemLines = cart.map(function (item) {
+      return '- ' + item.cantidad + ' × ' + item.articulo + ' (' + item.categoria + ')';
+    });
+
+    var lines = ['Nuevo pedido de consumibles', '', 'Solicitante: ' + nombre, '', 'Artículos:']
+      .concat(itemLines)
+      .concat([
+        '',
+        'Urgencia: ' + urgencia + (urgencia === 'Urgente' ? ' (recargo de 12€ por envío urgente a la Península)' : ''),
+        'Fecha del pedido: ' + hoy,
+        'Comentarios: ' + (comentarios || '-'),
+        '',
+        'Enviado desde la página de pedidos de consumibles de Innuro.'
+      ]);
+
+    return { subject: subject, body: lines.join('\n') };
+  }
+
+  function buildGmailUrl(content) {
+    return 'https://mail.google.com/mail/?view=cm&fs=1'
+      + '&to=' + encodeURIComponent(EMAIL)
+      + '&su=' + encodeURIComponent(content.subject)
+      + '&body=' + encodeURIComponent(content.body);
+  }
+
+  function buildMailtoUrl(content) {
+    return 'mailto:' + EMAIL
+      + '?subject=' + encodeURIComponent(content.subject)
+      + '&body=' + encodeURIComponent(content.body);
+  }
+
+  function copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        ok ? resolve() : reject(new Error('copy failed'));
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  copyBtn.addEventListener('click', function () {
+    if (!lastContent) return;
+    var text = 'Para: ' + EMAIL + '\nAsunto: ' + lastContent.subject + '\n\n' + lastContent.body;
+    var original = copyBtn.textContent;
+    copyToClipboard(text).then(function () {
+      copyBtn.textContent = '¡Copiado!';
+      setTimeout(function () { copyBtn.textContent = original; }, 2500);
+    }).catch(function () {
+      copyBtn.textContent = 'No se pudo copiar';
+      setTimeout(function () { copyBtn.textContent = original; }, 2500);
+    });
+  });
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    if (!nombreInput.value.trim()) { nombreInput.reportValidity(); return; }
+
+    if (cart.length === 0) {
+      cartWarning.classList.remove('hidden');
+      cartWarning.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    cartWarning.classList.add('hidden');
+
+    var content = buildMailContent();
+    lastContent = content;
+    manualLink.href = buildMailtoUrl(content);
+    confirmBox.classList.remove('hidden');
+
+    var trigger = document.createElement('a');
+    trigger.href = buildGmailUrl(content);
+    trigger.target = '_blank';
+    trigger.rel = 'noopener';
+    trigger.style.display = 'none';
+    document.body.appendChild(trigger);
+    trigger.click();
+    document.body.removeChild(trigger);
+
+    confirmBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+})();
+</script>
+</body>
+</html>
