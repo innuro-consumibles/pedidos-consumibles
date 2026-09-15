@@ -395,7 +395,7 @@
 <div class="page">
   <p class="eyebrow">Innuro &middot; Gestión interna</p>
   <h1>Pedido de consumibles</h1>
-  <p class="intro">Añade tantos artículos como necesites — por categoría y cantidad — y al final pulsa «Enviar pedido por correo». Se abrirá tu aplicación de correo con todo el pedido ya redactado; solo tendrás que darle a enviar.</p>
+  <p class="intro">Añade tantos artículos como necesites — por categoría y cantidad — y al final pulsa «Enviar pedido». El pedido se envía directamente, sin que tengas que abrir tu correo.</p>
 
   <form id="orderForm" novalidate>
     <div class="section">
@@ -473,15 +473,16 @@
 
     <div class="submit-note">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6 12 13 2 6"/><path d="M2 6h20v12H2z"/></svg>
-      <span>Al enviarlo se abrirá un borrador de Gmail dirigido a Adrián, ya redactado y listo para pulsar «Enviar».</span>
+      <span>Al pulsar «Enviar pedido», se envía directamente al equipo de Innuro. No hace falta que abras tu correo ni que hagas nada más.</span>
     </div>
 
-    <button type="submit">Enviar pedido por correo</button>
+    <button type="submit" id="submitBtn">Enviar pedido</button>
 
     <div class="confirm hidden" id="confirmBox">
-      <strong>Listo.</strong> Se ha abierto una pestaña de Gmail con el pedido ya redactado — solo tienes que darle a «Enviar» allí.
-      <div class="confirm-alt">
-        ¿No se ha abierto o no usas Gmail?
+      <strong id="confirmTitle">Pedido enviado.</strong>
+      <span id="confirmDetail">Lo hemos recibido correctamente.</span>
+      <div class="confirm-alt" id="confirmAlt">
+        ¿Quieres quedarte con una copia?
         <a id="manualLink" href="#" rel="noopener">Ábrelo en tu aplicación de correo</a>
         <span aria-hidden="true">·</span>
         <button type="button" id="copyBtn" class="link-btn">Copiar el pedido</button>
@@ -495,6 +496,11 @@
 <script>
 (function () {
   var EMAIL = 'adrian@innuro.es';
+  // URL de la implementación ("Web App") de Google Apps Script que envía el
+  // pedido por Gmail. Sustituye este valor por la URL que termina en /exec
+  // tras publicar el script (ver Code.gs). Mientras esté vacío, el botón
+  // usará el método antiguo (abrir Gmail) como respaldo.
+  var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwm56OKl5ebsxbgWLsX17osalxXVOtcVYyVKDGYRSMg5IFfeNlPEvOxXwfN_S6S5Qej/exec';
 
   var CATALOG = {
     DTF: [
@@ -582,8 +588,12 @@
   var cartWarning = document.getElementById('cartWarning');
   var urgentNote = document.getElementById('urgentNote');
   var confirmBox = document.getElementById('confirmBox');
+  var confirmTitle = document.getElementById('confirmTitle');
+  var confirmDetail = document.getElementById('confirmDetail');
+  var confirmAlt = document.getElementById('confirmAlt');
   var manualLink = document.getElementById('manualLink');
   var copyBtn = document.getElementById('copyBtn');
+  var submitBtn = document.getElementById('submitBtn');
 
   var cart = [];
   var lastContent = null;
@@ -781,6 +791,25 @@
     });
   });
 
+  function showConfirm(title, detail, showAlt) {
+    confirmTitle.textContent = title;
+    confirmDetail.textContent = detail;
+    confirmAlt.classList.toggle('hidden', !showAlt);
+    confirmBox.classList.remove('hidden');
+    confirmBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function openGmailFallback(content) {
+    var trigger = document.createElement('a');
+    trigger.href = buildGmailUrl(content);
+    trigger.target = '_blank';
+    trigger.rel = 'noopener';
+    trigger.style.display = 'none';
+    document.body.appendChild(trigger);
+    trigger.click();
+    document.body.removeChild(trigger);
+  }
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
 
@@ -797,18 +826,49 @@
     var content = buildMailContent();
     lastContent = content;
     manualLink.href = buildMailtoUrl(content);
-    confirmBox.classList.remove('hidden');
 
-    var trigger = document.createElement('a');
-    trigger.href = buildGmailUrl(content);
-    trigger.target = '_blank';
-    trigger.rel = 'noopener';
-    trigger.style.display = 'none';
-    document.body.appendChild(trigger);
-    trigger.click();
-    document.body.removeChild(trigger);
+    // Sin script configurado todavía: usamos el método anterior (abrir Gmail
+    // con el borrador ya escrito) como respaldo.
+    if (!APPS_SCRIPT_URL) {
+      showConfirm(
+        'Listo.',
+        'Se ha abierto una pestaña de Gmail con el pedido ya redactado — solo tienes que darle a «Enviar» allí.',
+        true
+      );
+      openGmailFallback(content);
+      return;
+    }
 
-    confirmBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando…';
+
+    // El Web App de Apps Script no responde con cabeceras CORS legibles,
+    // así que enviamos en modo "no-cors": no podemos leer la respuesta,
+    // pero la petición sí llega y Gmail envía el correo igualmente.
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ subject: content.subject, body: content.body })
+    }).then(function () {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Enviar pedido';
+      showConfirm('Pedido enviado.', 'Lo hemos recibido correctamente — no necesitas hacer nada más.', false);
+      form.reset();
+      cart = [];
+      renderCart();
+    }).catch(function () {
+      // Si falla la conexión, no perdemos el pedido: caemos al método
+      // anterior para que pueda enviarlo igualmente desde su correo.
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Enviar pedido';
+      showConfirm(
+        'No hemos podido enviarlo automáticamente.',
+        'Se ha abierto una pestaña de Gmail con el pedido ya redactado — dale a «Enviar» allí para que no se pierda.',
+        true
+      );
+      openGmailFallback(content);
+    });
   });
 })();
 </script>
