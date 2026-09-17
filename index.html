@@ -423,7 +423,7 @@
             <option value="POWDER">POWDER</option>
             <option value="FILM">FILM</option>
             <option value="3DTI">3DTI</option>
-            <option value="General">General</option>
+            <option value="Limpieza">Limpieza</option>
           </select>
         </div>
         <div class="field">
@@ -504,8 +504,6 @@
 
   var CATALOG = {
     DTF: [
-      'Líquido de limpieza DTF (1kg)',
-      'Líquido recuperador DTF (1kg)',
       'Tinta DTF Cian (1kg)',
       'Tinta DTF Magenta (1kg)',
       'Tinta DTF Amarillo (1kg)',
@@ -536,7 +534,6 @@
       'Tinta UV 01 Negro (1kg)',
       'Tinta UV 01 Blanco (1kg)',
       'Barniz UV 01 (1kg)',
-      'Líquido de limpieza UV (1kg)',
       'Film UV DTF A — 30cm (caja 2 rollos x 100m)',
       'Film UV DTF B — 30cm (caja 2 rollos x 100m)',
       'Film UV DTF A — 60cm x 100m',
@@ -564,13 +561,16 @@
       'Tinta UV 3D Negro (1kg)',
       'Tinta UV 3D Blanco (1kg)',
       'Barniz UV 3D (1kg)',
-      'Líquido de limpieza UV 3D (1kg)',
       'Vinilo Silicone Block 0,16mm',
       'Vinilo Silicone Block 0,55mm'
     ],
-    General: [
+    Limpieza: [
       'Bastoncillos de limpieza (pack)',
-      'Toallitas de limpieza (pack)'
+      'Toallitas de limpieza (pack)',
+      'Líquido de limpieza DTF (1kg)',
+      'Líquido recuperador DTF (1kg)',
+      'Líquido de limpieza UV (1kg)',
+      'Líquido de limpieza UV 3D (1kg)'
     ]
   };
 
@@ -740,7 +740,8 @@
         'Enviado desde la página de pedidos de consumibles de Innuro.'
       ]);
 
-    return { subject: subject, body: lines.join('\n') };
+    return { subject: subject, body: lines.join('
+') };
   }
 
   function buildGmailUrl(content) {
@@ -780,7 +781,10 @@
 
   copyBtn.addEventListener('click', function () {
     if (!lastContent) return;
-    var text = 'Para: ' + EMAIL + '\nAsunto: ' + lastContent.subject + '\n\n' + lastContent.body;
+    var text = 'Para: ' + EMAIL + '
+Asunto: ' + lastContent.subject + '
+
+' + lastContent.body;
     var original = copyBtn.textContent;
     copyToClipboard(text).then(function () {
       copyBtn.textContent = '¡Copiado!';
