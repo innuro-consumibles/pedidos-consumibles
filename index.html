@@ -187,52 +187,6 @@
     border-color: var(--urgent);
   }
 
-  .urgency {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-  }
-  .urgency input { position: absolute; opacity: 0; pointer-events: none; }
-  .urgency label {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    border: 1px solid var(--border-strong);
-    background: var(--surface-sunken);
-    border-radius: 8px;
-    padding: 10px 6px;
-    font-size: 13.5px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
-    position: relative;
-  }
-  .urgency input:checked + label {
-    background: var(--accent-tint);
-    border-color: var(--accent);
-    color: var(--accent-strong);
-  }
-  .urgency input:focus-visible + label {
-    outline: 2px solid var(--focus);
-    outline-offset: 2px;
-  }
-  .urgency-item[data-level="urgente"] input:checked + label {
-    background: var(--urgent-tint);
-    border-color: var(--urgent);
-    color: var(--urgent);
-  }
-
-  .urgent-note {
-    margin: 12px 0 0;
-    font-size: 13px;
-    color: var(--urgent);
-    background: var(--urgent-tint);
-    border: 1px solid color-mix(in srgb, var(--urgent) 35%, transparent);
-    border-radius: 8px;
-    padding: 9px 12px;
-  }
-
   .add-btn {
     appearance: none;
     width: 100%;
@@ -456,21 +410,6 @@
       </div>
     </div>
 
-    <div class="section">
-      <p class="section-label">Urgencia</p>
-      <div class="urgency" role="radiogroup" aria-label="Urgencia del pedido">
-        <span class="urgency-item" data-level="normal">
-          <input type="radio" id="urgNormal" name="urgencia" value="Normal" checked>
-          <label for="urgNormal">Normal</label>
-        </span>
-        <span class="urgency-item" data-level="urgente">
-          <input type="radio" id="urgUrgente" name="urgencia" value="Urgente">
-          <label for="urgUrgente">Urgente</label>
-        </span>
-      </div>
-      <p class="urgent-note hidden" id="urgentNote">El envío urgente a la Península tiene un coste adicional de 12&nbsp;€.</p>
-    </div>
-
     <div class="submit-note">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6 12 13 2 6"/><path d="M2 6h20v12H2z"/></svg>
       <span>Al pulsar «Enviar pedido», se envía directamente al equipo de Innuro. No hace falta que abras tu correo ni que hagas nada más.</span>
@@ -586,7 +525,6 @@
   var cartEmpty = document.getElementById('cartEmpty');
   var cartList = document.getElementById('cartList');
   var cartWarning = document.getElementById('cartWarning');
-  var urgentNote = document.getElementById('urgentNote');
   var confirmBox = document.getElementById('confirmBox');
   var confirmTitle = document.getElementById('confirmTitle');
   var confirmDetail = document.getElementById('confirmDetail');
@@ -636,12 +574,6 @@
     otroField.classList.toggle('hidden', !isOtro);
     otroInput.required = isOtro;
     if (!isOtro) otroInput.value = '';
-  });
-
-  form.addEventListener('change', function (e) {
-    if (e.target.name === 'urgencia') {
-      urgentNote.classList.toggle('hidden', e.target.value !== 'Urgente');
-    }
   });
 
   function renderCart() {
@@ -716,14 +648,11 @@
     var nombre = nombreInput.value.trim();
     var cif = cifInput.value.trim();
     var comentarios = document.getElementById('comentarios').value.trim();
-    var urgenciaEl = form.querySelector('input[name="urgencia"]:checked');
-    var urgencia = urgenciaEl ? urgenciaEl.value : 'Normal';
     var ahora = new Date();
     var hoy = ahora.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
     var hoyCorto = ahora.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-    var subject = 'Pedido de consumibles — ' + nombre + ' — ' + hoyCorto
-      + (urgencia === 'Urgente' ? ' [URGENTE]' : '');
+    var subject = 'Pedido de consumibles — ' + nombre + ' — ' + hoyCorto;
 
     var itemLines = cart.map(function (item) {
       return '- ' + item.cantidad + ' × ' + item.articulo + ' (' + item.categoria + ')';
@@ -733,7 +662,6 @@
       .concat(itemLines)
       .concat([
         '',
-        'Urgencia: ' + urgencia + (urgencia === 'Urgente' ? ' (recargo de 12€ por envío urgente a la Península)' : ''),
         'Fecha del pedido: ' + hoy,
         'Comentarios: ' + (comentarios || '-'),
         '',
