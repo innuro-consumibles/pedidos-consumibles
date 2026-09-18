@@ -668,8 +668,7 @@
         'Enviado desde la página de pedidos de consumibles de Innuro.'
       ]);
 
-    return { subject: subject, body: lines.join('
-') };
+    return { subject: subject, body: lines.join('\n') };
   }
 
   function buildGmailUrl(content) {
@@ -709,10 +708,7 @@
 
   copyBtn.addEventListener('click', function () {
     if (!lastContent) return;
-    var text = 'Para: ' + EMAIL + '
-Asunto: ' + lastContent.subject + '
-
-' + lastContent.body;
+    var text = 'Para: ' + EMAIL + '\nAsunto: ' + lastContent.subject + '\n\n' + lastContent.body;
     var original = copyBtn.textContent;
     copyToClipboard(text).then(function () {
       copyBtn.textContent = '¡Copiado!';
